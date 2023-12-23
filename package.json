@@ -1,0 +1,44 @@
+{
+  "name": "water-distortion",
+  "homepage": "https://github.com/UstymUkhman/water-distortion#readme",
+  "description": "WebGL Water Distortion",
+  "packageManager": "^npm@9.8.0",
+  "main": "src/main.ts",
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UstymUkhman/water-distortion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/UstymUkhman/water-distortion/issues",
+    "email": "ustym.ukhman@gmail.com"
+  },
+  "author": {
+    "name": "Ustym Ukhman",
+    "email": "ustym.ukhman@gmail.com",
+    "url": "https://github.com/UstymUkhman/"
+  },
+  "keywords": [
+    "webgl",
+    "water",
+    "distortion"
+  ],
+  "scripts": {
+    "start": "vite",
+    "serve": "vite preview",
+    "build": "tsc && vite build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8",
+    "vite-plugin-glsl": "^1.2.1"
+  },
+  "engines": {
+    "node": ">= 18.12.1",
+    "pnpm": ">= 8.12.1"
+  }
+}
