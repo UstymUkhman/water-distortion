@@ -44,7 +44,12 @@ void main(void)
 	// Render waves framebuffer to the screen:
 	fragColor = vec4(texture(waves, uv).rgb, 1.0);
 #else
+	vec2 distortion = distort();
+
+	// Flip texture UVs along Y-axis:
+	distortion.y = 1.0 - distortion.y;
+
 	// Render distorted texture to the screen:
-	fragColor = texture(ocean, distort());
+	fragColor = texture(ocean, distortion);
 #endif
 }
