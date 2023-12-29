@@ -163,6 +163,7 @@ export default class Text
 
 	private get hintAmount(): number
 	{
+		// Best hint amount for a black text is 1 and 0 for a white text, so:
 		return 1.0 - (this.color[0] + this.color[1] + this.color[2]) / 3.0;
 	}
 
@@ -170,7 +171,8 @@ export default class Text
 		position: [number, number],
 		vertices: Float32Array,
 		metrics: Metrics,
-		text: string
+		text: string,
+		first = true
 	): void {
 		const { lineHeight, upScale } = metrics;
 
@@ -255,6 +257,15 @@ export default class Text
 		// Set text bounding box and vertices count:
 		this.rectangle = [x, y, width, height];
 		this.vertices = arrayPosition / 5;
+
+		// Center text on canvas:
+		first && this.setTextRectangle(
+			[penPosition[0] * -0.5, height * 0.5],
+			this.vertexData,
+			metrics,
+			text,
+			!!0
+		);
 	}
 
 	private getCharacterRectangle(

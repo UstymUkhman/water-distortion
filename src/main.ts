@@ -1,11 +1,14 @@
 import Distortion from '/distortion.png';
 import Fragment from '@/main.frag';
 import Vertex from '@/main.vert';
+import Roboto from '/roboto.png';
 import Ocean from '/ocean.jpg';
 import Waves from '@/waves';
+// import Text from '@/text';
 
 export default class
 {
+	// private text!: Text;
 	private raf!: number;
 	private waves!: Waves;
 	private moving = false;
@@ -59,6 +62,10 @@ export default class
 			// to render onto a framebuffer:
 			this.waves = new Waves(this.gl, images[1]);
 
+			// Initialize text program
+			// to render onto a framebuffer:
+			// this.text = new Text(this.gl, images[2]);
+
 			// Update sizes, uniforms and
 			// start rendering to screen:
 			this.resize(); this.update();
@@ -107,7 +114,8 @@ export default class
 		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
 
 		// Flip uploaded textures pixels along Y-axis:
-		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+		// this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+		// Moved to the fragment shader since it conflicts with text rendering.
 
 		// Set canvas clear color (opaque black):
 		this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -138,6 +146,15 @@ export default class
 				const image = new Image();
 				image.src = Distortion;
 				image.onload = onLoad;
+			}),
+
+			// Roboto font:
+			new Promise(resolve =>
+			{
+				const onLoad = () => resolve(image);
+				const image = new Image();
+				image.onload = onLoad;
+				image.src = Roboto;
 			})
 		]);
 	}
@@ -198,8 +215,8 @@ export default class
 		const top = canvas.offsetTop;
 		const left = canvas.offsetLeft;
 
-		const right = left + canvas.width;
-		const bottom = top + canvas.height;
+		const right = left + canvas.offsetWidth;
+		const bottom = top + canvas.offsetHeight;
 
 		// Check if touch coordinates are within
 		// the canvas and trigger mouse move event:
@@ -215,9 +232,9 @@ export default class
 		// Prevent stopping mouse movement:
 		clearTimeout(this.movement);
 
-		// Update mouse coordinates:
-		this.mouse[0] = coords.offsetX;
-		this.mouse[1] = coords.offsetY;
+		// Update mouse coordinates with device pixel ratio:
+		this.mouse[0] = coords.offsetX * devicePixelRatio;
+		this.mouse[1] = coords.offsetY * devicePixelRatio;
 
 		// Stop mouse movement next frame:
 		this.movement = setTimeout(() =>
@@ -233,6 +250,9 @@ export default class
 		// Clear canvas before rendering on screen:
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
+		// Draw text:
+		// this.text.update();
+
 		// Use "main" WebGL program:
 		this.gl.useProgram(this.program);
 
@@ -243,6 +263,11 @@ export default class
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, this.positionData, this.gl.STATIC_DRAW);
 		this.gl.vertexAttribPointer(this.positionLocation, 2.0, this.gl.FLOAT, false, 0.0, 0.0);
 
+		// Reset blending function and blend color:
+		// this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
+		// const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
+		// this.gl.blendColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+
 		// Render canvas to screen by drawing its triangles:
 		this.gl.drawArrays(this.gl.TRIANGLES, 0.0, 6.0);
 
@@ -252,9 +277,27 @@ export default class
 
 	private resize(): void
 	{
-		// Define canvas size based on screen width and 16 / 9 aspect ratio:
-		this.canvas.width = Math.min(innerWidth * 0.9, 1440.0) | 0;
-		this.canvas.height = this.canvas.width / 16.0 * 9.0 | 0;
+		// Define canvas size based on screen width (in portrait mode) or
+		// screen height (in landscape mode) and 16 / 9 aspect ratio:
+		let height: number, width: number, dpr = devicePixelRatio;
+
+		if (innerWidth / 16.0 * 9.0 < innerHeight)
+		{
+			width = Math.min(innerWidth * 0.9, 1600.0) | 0;
+			height = width / 16.0 * 9.0 | 0;
+		}
+		else
+		{
+			height = Math.min(innerHeight * 0.9, 900.0) | 0;
+			width = height / 9.0 * 16.0 | 0;
+		}
+
+		// Correct the canvas size, including the device pixel ratio:
+		this.canvas.width = Math.round(width * dpr * 0.5) * 2.0;
+        this.canvas.height = Math.round(height * dpr * 0.5) * 2.0;
+
+        this.canvas.style.height = `${this.canvas.height / dpr}px`;
+		this.canvas.style.width  = `${this.canvas.width / dpr}px`;
 
 		// Update position attribute data:
 		this.positionData[2] = this.canvas.width;
@@ -264,6 +307,9 @@ export default class
 		this.positionData[5] = this.canvas.height;
 		this.positionData[7] = this.canvas.height;
 		this.positionData[9] = this.canvas.height;
+
+		// Resize text:
+		// this.text.resize();
 
 		// Resize waves:
 		this.waves.resize();
