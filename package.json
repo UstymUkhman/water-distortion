@@ -1,13 +1,14 @@
 {
   "name": "water-distortion",
-  "homepage": "https://github.com/UstymUkhman/water-distortion#readme",
   "description": "WebGL Water Distortion",
+  "homepage": "https://github.com/UstymUkhman/water-distortion#readme",
+  "author": "Ustym Ukhman <ustym.ukhman@gmail.com> (https://github.com/UstymUkhman/)",
   "packageManager": "^npm@9.8.0",
-  "main": "src/main.ts",
-  "version": "0.0.1",
+  "main": "src/index.ts",
+  "version": "1.0.0",
+  "private": false,
   "license": "MIT",
   "type": "module",
-  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/UstymUkhman/water-distortion.git"
@@ -15,11 +16,6 @@
   "bugs": {
     "url": "https://github.com/UstymUkhman/water-distortion/issues",
     "email": "ustym.ukhman@gmail.com"
-  },
-  "author": {
-    "name": "Ustym Ukhman",
-    "email": "ustym.ukhman@gmail.com",
-    "url": "https://github.com/UstymUkhman/"
   },
   "keywords": [
     "webgl",

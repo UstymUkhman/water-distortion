@@ -6,10 +6,12 @@ import Roboto from '@/roboto.json';
 import Fragment from '@/text.frag';
 import Vertex from '@/text.vert';
 
+// Font data can contain "kern":
 type Font = typeof Roboto & {
 	kern?: Record<string, number>;
 };
 
+// Cached font metrics:
 type Metrics = {
 	ascentScale: number;
 	lineHeight: number;
@@ -27,8 +29,8 @@ export default class Text
 	private readonly program: WebGLProgram;
 	private transform = new Float32Array(9);
 
-	private vertexData = new Float32Array(3e5);
-	private vertexBuffer: WebGLBuffer | null = null;
+	private positionData = new Float32Array(3e5);
+	private positionBuffer: WebGLBuffer | null = null;
 	private readonly color: RGBA = [1.0, 1.0, 1.0, 1.0];
 
 	private framebuffer: WebGLFramebuffer | null = null;
@@ -153,12 +155,12 @@ export default class Text
 	private createTextBufferData(): void
 	{
 		// Create and bind text position attributes:
-		this.vertexBuffer = this.gl.createBuffer();
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+		this.positionBuffer = this.gl.createBuffer();
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
 
-		// "DYNAMIC_DRAW" is used here 'cause even if text won't change, `vertexData`
+		// "DYNAMIC_DRAW" is used here 'cause even if text won't change, `positionData`
 		// will be updated in the resize callback along with text position and font size:
-		this.gl.bufferData(this.gl.ARRAY_BUFFER, this.vertexData, this.gl.DYNAMIC_DRAW);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, this.positionData, this.gl.DYNAMIC_DRAW);
 	}
 
 	private createTextUniforms(): void
@@ -311,7 +313,7 @@ export default class Text
 		// Center text on canvas:
 		first && this.setTextRectangle(
 			[penPosition[0] * -0.5, height * 0.5],
-			this.vertexData,
+			this.positionData,
 			metrics,
 			text,
 			!!0
@@ -372,8 +374,8 @@ export default class Text
 
 		// Enable text position attributes, bind its buffer
 		// and update a subset of buffer object's data store:
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-		this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.vertexData);
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+		this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.positionData);
 
 		for (let a = 0; a < 3; a++)
 		{
@@ -411,7 +413,7 @@ export default class Text
 		// Update text size and position:
 		this.setTextRectangle(
 			[0.0, 0.0],
-			this.vertexData,
+			this.positionData,
 			this.getFontMetrics(fontSize),
 			'WATER DISTORTION'
 		);
@@ -457,5 +459,42 @@ export default class Text
 
 	public dispose(): void
 	{
+		// Remove text bounding box:
+		this.rectangle.length = 0;
+
+		// Unbind font texture:
+		this.gl.activeTexture(this.gl.TEXTURE3);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
+		// Unbind framebuffer texture:
+		this.gl.activeTexture(this.gl.TEXTURE4);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
+		// Bind an "empty" position buffer to clear its data:
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, 0, this.gl.DYNAMIC_DRAW);
+
+		// Bind text framebuffer with no texture to clear it:
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+
+		this.gl.framebufferTexture2D(
+			this.gl.FRAMEBUFFER,
+			this.gl.COLOR_ATTACHMENT0,
+			this.gl.TEXTURE_2D,
+			null,
+			0.0
+		);
+
+		// Unbind buffers:
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
+		// Delete framebuffer and its texture:
+		this.gl.deleteFramebuffer(this.framebuffer);
+		this.gl.deleteTexture(this.framebufferTexture);
+
+		// Delete position buffer and "text" WebGL program:
+		this.gl.deleteBuffer(this.positionBuffer);
+		this.gl.deleteProgram(this.program);
 	}
 }
