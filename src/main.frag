@@ -14,6 +14,7 @@
 uniform float 	  force;
 uniform sampler2D ocean;
 uniform sampler2D waves;
+uniform sampler2D  text;
 
 // Varyings:
 in vec2 uv;
@@ -21,7 +22,6 @@ in vec2 uv;
 // Output color:
 out vec4 fragColor;
 
-// UV distortion:
 vec2 distort(void)
 {
 	// Get color from waves framebuffer:
@@ -44,12 +44,17 @@ void main(void)
 	// Render waves framebuffer to the screen:
 	fragColor = vec4(texture(waves, uv).rgb, 1.0);
 #else
+	// Get distorted UVs from waves framebuffer:
 	vec2 distortion = distort();
 
-	// Flip texture UVs along Y-axis:
+	// Sample text framebuffer with distorted UVs:
+	vec4 textColor = texture(text, distortion);
+
+	// Flip distorted UVs along Y-axis:
 	distortion.y = 1.0 - distortion.y;
 
-	// Render distorted texture to the screen:
-	fragColor = texture(ocean, distortion);
+	// Sample ocean texture, add it to the text
+	// framebuffer and render onto the screen:
+	fragColor = texture(ocean, distortion) + textColor;
 #endif
 }

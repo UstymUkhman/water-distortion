@@ -1,6 +1,6 @@
 # Water Distortion #
 
-> Inspired by alphardex [website](https://haobinwang-2023.netlify.app/).
+> Inspired by alphardex [website](https://haobinwang-2023.netlify.app/) and astiopin [webgl_fonts](https://github.com/astiopin/webgl_fonts).
 
 <!-- ![](./public/preview.gif) -->
 

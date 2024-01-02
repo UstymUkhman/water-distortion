@@ -4,11 +4,11 @@ import Vertex from '@/main.vert';
 import Roboto from '/roboto.png';
 import Ocean from '/ocean.jpg';
 import Waves from '@/waves';
-// import Text from '@/text';
+import Text from '@/text';
 
 export default class
 {
-	// private text!: Text;
+	private text!: Text;
 	private raf!: number;
 	private waves!: Waves;
 	private moving = false;
@@ -64,7 +64,7 @@ export default class
 
 			// Initialize text program
 			// to render onto a framebuffer:
-			// this.text = new Text(this.gl, images[2]);
+			this.text = new Text(this.gl, images[2]);
 
 			// Update sizes, uniforms and
 			// start rendering to screen:
@@ -178,7 +178,7 @@ export default class
 
 		// Create and bind background texture:
 		const texture = this.gl.createTexture();
-		this.gl.activeTexture(this.gl.TEXTURE1);
+		this.gl.activeTexture(this.gl.TEXTURE0);
 		this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
 		this.gl.texImage2D(
@@ -199,8 +199,9 @@ export default class
 
 		// Set "main" WebGL program uniforms:
 		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'force'), 0.1);
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'ocean'), 1.0);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'ocean'), 0.0);
 		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'waves'), 2.0);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program,  'text'), 4.0);
 	}
 
 	private touchMove(event: TouchEvent): void
@@ -251,7 +252,7 @@ export default class
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
 		// Draw text:
-		// this.text.update();
+		this.text.update();
 
 		// Use "main" WebGL program:
 		this.gl.useProgram(this.program);
@@ -309,7 +310,7 @@ export default class
 		this.positionData[9] = this.canvas.height;
 
 		// Resize text:
-		// this.text.resize();
+		this.text.resize();
 
 		// Resize waves:
 		this.waves.resize();
@@ -343,8 +344,11 @@ export default class
 		// Clean-up distortion waves:
 		this.waves.dispose();
 
+		// Clean-up text program:
+		this.text.dispose();
+
 		// Unbind background texture:
-		this.gl.activeTexture(this.gl.TEXTURE1);
+		this.gl.activeTexture(this.gl.TEXTURE0);
 		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
 		// Bind an "empty" position buffer to clear its data:

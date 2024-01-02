@@ -121,7 +121,7 @@ export default class Waves
 
 		// Create and bind distortion texture:
 		const texture = this.gl.createTexture();
-		this.gl.activeTexture(this.gl.TEXTURE0);
+		this.gl.activeTexture(this.gl.TEXTURE1);
 		this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
 		this.gl.texImage2D(
@@ -141,7 +141,7 @@ export default class Waves
 		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
 
 		// Set "wave" WebGL program uniforms:
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'distortion'), 0.0);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'distortion'), 1.0);
 		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'planeSize'), size);
 
 		this.gl.uniform1f(this.scale, 0.256);
@@ -223,7 +223,10 @@ export default class Waves
 			const plane = this.planes[p];
 
 			// Skip rendering if it's not visible:
-			if (plane.alpha === 0.002) continue;
+			if (plane.alpha === 0.002)
+			{
+				continue;
+			}
 
 			// Update position only of the current plane:
 			if (this.current === p)
@@ -262,7 +265,9 @@ export default class Waves
 			this.gl.canvas.width, this.gl.canvas.height
 		);
 
-		// Bind and scale framebuffer texture according to canvas size:
+		// Bind and scale framebuffer
+		// texture according to canvas size:
+		this.gl.activeTexture(this.gl.TEXTURE2);
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.framebufferTexture);
 
 		this.gl.texImage2D(
@@ -284,7 +289,7 @@ export default class Waves
 		this.planes.length = 0;
 
 		// Unbind distortion texture:
-		this.gl.activeTexture(this.gl.TEXTURE0);
+		this.gl.activeTexture(this.gl.TEXTURE1);
 		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
 		// Unbind framebuffer texture:

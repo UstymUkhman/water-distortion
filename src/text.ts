@@ -31,6 +31,9 @@ export default class Text
 	private vertexBuffer: WebGLBuffer | null = null;
 	private readonly color: RGBA = [1.0, 1.0, 1.0, 1.0];
 
+	private framebuffer: WebGLFramebuffer | null = null;
+	private framebufferTexture: WebGLTexture | null = null;
+
 	public constructor(
 		private readonly gl: WebGL2RenderingContext,
 		image: HTMLImageElement
@@ -38,24 +41,23 @@ export default class Text
 		// Create, compile and use "text" WebGL program:
 		if (this.program = this.createProgram() as WebGLProgram)
 		{
-			const fontSize = Math.round(24.0 * devicePixelRatio);
-			const metrics = this.getFontMetrics(fontSize);
-
+			// Use "Roboto Bold" font texture:
 			this.createFontTexture(image);
+
+			// Create text vertex buffer:
 			this.createTextBufferData();
+
+			// Create SDF text uniforms:
 			this.createTextUniforms();
 
-			this.setTextRectangle(
-				[0.0, 0.0],
-				this.vertexData,
-				metrics,
-				'WATER DISTORTION'
-			);
+			// Create text framebuffer:
+			this.createFramebuffer();
 		}
 	}
 
 	private createProgram(): WebGLProgram | void
 	{
+		// Create and compile "text" vertext shader:
 		const vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER) as WebGLShader;
 		this.gl.shaderSource(vertexShader, Vertex);
 		this.gl.compileShader(vertexShader);
@@ -66,6 +68,7 @@ export default class Text
 			return this.gl.deleteShader(vertexShader);
 		}
 
+		// Create and compile "text" fragment shader:
 		const fragmentShader = this.gl.createShader(this.gl.FRAGMENT_SHADER) as WebGLShader;
 		this.gl.shaderSource(fragmentShader, Fragment);
 		this.gl.compileShader(fragmentShader);
@@ -76,6 +79,7 @@ export default class Text
 			return this.gl.deleteShader(fragmentShader);
 		}
 
+		// Attach shaders and link "text" WebGL program:
 		const program = this.gl.createProgram() as WebGLProgram;
 		this.gl.attachShader(program, fragmentShader);
 		this.gl.attachShader(program, vertexShader);
@@ -86,6 +90,7 @@ export default class Text
 			return console.error(`Unable to initialize shader program: ${this.gl.getProgramInfoLog(program)}`);
 		}
 
+		// Use "text" WebGL program:
 		this.gl.useProgram(program);
 
 		return program;
@@ -147,13 +152,18 @@ export default class Text
 
 	private createTextBufferData(): void
 	{
+		// Create and bind text position attributes:
 		this.vertexBuffer = this.gl.createBuffer();
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+
+		// "DYNAMIC_DRAW" is used here 'cause even if text won't change, `vertexData`
+		// will be updated in the resize callback along with text position and font size:
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, this.vertexData, this.gl.DYNAMIC_DRAW);
 	}
 
 	private createTextUniforms(): void
 	{
+		// Set SDF text rendering and font texture uniforms:
 		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'subpixelRendering'), +this.subpixel);
 		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'hintAmount'), this.hintAmount);
 		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'borderSize'), Roboto.iy);
@@ -161,9 +171,49 @@ export default class Text
 		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'fontTexture'), 3.0);
 	}
 
+	private createFramebuffer(): void
+	{
+		// Create, bind and scale framebuffer
+		// texture according to canvas size:
+		this.gl.activeTexture(this.gl.TEXTURE4);
+		this.framebufferTexture = this.gl.createTexture();
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.framebufferTexture);
+
+		this.gl.texImage2D(
+			this.gl.TEXTURE_2D,
+			0.0,
+			this.gl.RGBA,
+			this.gl.canvas.width,
+			this.gl.canvas.height,
+			0.0,
+			this.gl.RGBA,
+			this.gl.UNSIGNED_BYTE,
+			null
+		);
+
+		// Set framebuffer texture rendering parameters:
+		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+
+		// Create and bind a framebuffer and set its texture:
+		this.framebuffer = this.gl.createFramebuffer();
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+
+		this.gl.framebufferTexture2D(
+			this.gl.FRAMEBUFFER,
+			this.gl.COLOR_ATTACHMENT0,
+			this.gl.TEXTURE_2D,
+			this.framebufferTexture,
+			0.0
+		);
+	}
+
 	private get hintAmount(): number
 	{
-		// Best hint amount for a black text is 1 and 0 for a white text, so:
+		// Best hint amount for a black text is 1 and 0 for a white one, so:
 		return 1.0 - (this.color[0] + this.color[1] + this.color[2]) / 3.0;
 	}
 
@@ -311,8 +361,17 @@ export default class Text
 
 	public update(): void
 	{
+		// Bind text framebuffer to draw onto it:
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+
+		// Clear framebuffer before drawing:
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+		// Use "text" WebGL program:
 		this.gl.useProgram(this.program);
 
+		// Enable text position attributes, bind its buffer
+		// and update a subset of buffer object's data store:
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
 		this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.vertexData);
 
@@ -322,7 +381,9 @@ export default class Text
 			this.gl.vertexAttribPointer(a, 1.0 + +(a < 2.0), this.gl.FLOAT, false, 20.0, a * 8.0);
 		}
 
-		if (this.subpixel)
+		// Update blending function and blend color for this program
+		// (not required if `subpixel` is enabled and text color is white):
+		/* if (this.subpixel)
 		{
             // Subpixel antialiasing by Radek Dutkiewicz (https://github.com/oomek).
             // Text color goes to constant blend factor and triplet alpha comes from the shader output:
@@ -333,13 +394,29 @@ export default class Text
 		{
             // Grayscale antialising:
             this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-        }
+        } */
 
+		// Draw text texture to the framebuffer:
         this.gl.drawArrays(this.gl.TRIANGLES, 0.0, this.vertices);
+
+		// Unbind text framebuffer to render to screen:
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
 	}
 
 	public resize(): void
 	{
+		// Set text font size to be 2 / 3 of the canvas width:
+		const fontSize = Math.round(this.gl.canvas.width * 0.02 / 0.3);
+
+		// Update text size and position:
+		this.setTextRectangle(
+			[0.0, 0.0],
+			this.vertexData,
+			this.getFontMetrics(fontSize),
+			'WATER DISTORTION'
+		);
+
+		// Get new transform matrix for the vertex shader:
 		const x = Math.round(this.rectangle[2] * -0.5);
         const y = Math.round(this.rectangle[3] * 0.5);
 
@@ -351,12 +428,30 @@ export default class Text
 		this.transform[6] = x * width;
 		this.transform[7] = y * height;
 
+		// Switch to "text" program:
 		this.gl.useProgram(this.program);
 
 		// Update transform uniform:
 		this.gl.uniformMatrix3fv(
 			this.gl.getUniformLocation(this.program, 'transform'),
 			false, this.transform
+		);
+
+		// Bind and scale framebuffer
+		// texture according to canvas size:
+		this.gl.activeTexture(this.gl.TEXTURE4);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.framebufferTexture);
+
+		this.gl.texImage2D(
+			this.gl.TEXTURE_2D,
+			0.0,
+			this.gl.RGBA,
+			this.gl.canvas.width,
+			this.gl.canvas.height,
+			0.0,
+			this.gl.RGBA,
+			this.gl.UNSIGNED_BYTE,
+			null
 		);
 	}
 
