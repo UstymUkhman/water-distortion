@@ -248,11 +248,11 @@ export default class
 		// Update distortion waves framebuffer:
 		this.waves.update(this.mouse, this.moving);
 
+		// Draw text and check for alpha usage:
+		/* const resetBlending = */ this.text.update();
+
 		// Clear canvas before rendering on screen:
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-
-		// Draw text:
-		this.text.update();
 
 		// Use "main" WebGL program:
 		this.gl.useProgram(this.program);
@@ -264,10 +264,15 @@ export default class
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, this.positionData, this.gl.STATIC_DRAW);
 		this.gl.vertexAttribPointer(this.positionLocation, 2.0, this.gl.FLOAT, false, 0.0, 0.0);
 
-		// Reset blending function and blend color:
-		// this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
-		// const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
-		// this.gl.blendColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+		// Reset to additive blending with plane transparency
+		// if a different one was used in "text" program:
+		/* if (resetBlending)
+		{
+			// Reset blending function and blend color:
+			this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
+			const clearColor = this.gl.getParameter(this.gl.COLOR_CLEAR_VALUE);
+			this.gl.blendColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+		} */
 
 		// Render canvas to screen by drawing its triangles:
 		this.gl.drawArrays(this.gl.TRIANGLES, 0.0, 6.0);

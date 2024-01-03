@@ -71,15 +71,15 @@ void main(void)
         float x = texture(fontTexture, uv - subpixel).g;
         float z = texture(fontTexture, uv + subpixel).g;
 
-		// Horizontal scale should equal to a subpixel size (1 / 3), but that is too colorful:
+		// Horizontal scale should equal to a subpixel
+		// size (1 / 3), but that seems to be too colorful:
         vec3 tripletAlpha = SDFAlpha(vec3(x, sdf, z), 0.5, 0.6, verticalGradient);
-
-		// Calculate an average alpha factor from other triplet SDF alpha channels:
-		float alpha = tripletAlpha.r + tripletAlpha.g + tripletAlpha.b / 3.0;
 
         // For BGR subpixels:
         // tripletAlpha = tripletAlpha.bgr;
-        fragColor = vec4(tripletAlpha, color.a * alpha);
+
+		// Keep text color by multiplying it by the SDF:
+        fragColor = vec4(tripletAlpha * color.rgb, color.a);
     }
 	else
 	{

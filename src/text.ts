@@ -6,12 +6,10 @@ import Roboto from '@/roboto.json';
 import Fragment from '@/text.frag';
 import Vertex from '@/text.vert';
 
-// Font data can contain "kern":
 type Font = typeof Roboto & {
 	kern?: Record<string, number>;
 };
 
-// Cached font metrics:
 type Metrics = {
 	ascentScale: number;
 	lineHeight: number;
@@ -31,7 +29,7 @@ export default class Text
 
 	private positionData = new Float32Array(3e5);
 	private positionBuffer: WebGLBuffer | null = null;
-	private readonly color: RGBA = [1.0, 1.0, 1.0, 1.0];
+	private readonly color: RGBA = [0.8, 0.8, 0.8, 1.0];
 
 	private framebuffer: WebGLFramebuffer | null = null;
 	private framebufferTexture: WebGLTexture | null = null;
@@ -361,7 +359,7 @@ export default class Text
 		};
 	}
 
-	public update(): void
+	public update(): void // boolean
 	{
 		// Bind text framebuffer to draw onto it:
 		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
@@ -371,6 +369,9 @@ export default class Text
 
 		// Use "text" WebGL program:
 		this.gl.useProgram(this.program);
+
+		// Check for alpha channel usage:
+		// const alpha = this.color[3] < 1.0;
 
 		// Enable text position attributes, bind its buffer
 		// and update a subset of buffer object's data store:
@@ -383,26 +384,35 @@ export default class Text
 			this.gl.vertexAttribPointer(a, 1.0 + +(a < 2.0), this.gl.FLOAT, false, 20.0, a * 8.0);
 		}
 
-		// Update blending function and blend color for this program
-		// (not required if `subpixel` is enabled and text color is white):
-		/* if (this.subpixel)
+		// Update blending function for this program if text is drawn with an alpha channel:
+		/* if (alpha)
 		{
-            // Subpixel antialiasing by Radek Dutkiewicz (https://github.com/oomek).
-            // Text color goes to constant blend factor and triplet alpha comes from the shader output:
-            this.gl.blendFunc(this.gl.CONSTANT_COLOR, this.gl.ONE_MINUS_SRC_COLOR);
-            this.gl.blendColor(...this.color);
-        }
-		else
-		{
-            // Grayscale antialising:
-            this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-        } */
+			// Update blend color (only if `subpixel` is enabled and text color is not white):
+			if (this.subpixel)
+			{
+				// Subpixel antialiasing by Radek Dutkiewicz (https://github.com/oomek).
+				// Text color goes to constant blend factor and triplet alpha comes from the shader output:
+				// this.gl.blendFunc(this.gl.CONSTANT_COLOR, this.gl.ONE_MINUS_SRC_COLOR);
+
+				// If text is drawn with an alpha channel, source factor must respect it:
+				const sfactor = alpha ? this.gl.SRC_ALPHA : this.gl.CONSTANT_COLOR;
+				this.gl.blendFunc(sfactor, this.gl.ONE_MINUS_SRC_COLOR);
+				this.gl.blendColor(...this.color);
+			}
+			else
+			{
+				// Grayscale antialising:
+				this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+			}
+		} */
 
 		// Draw text texture to the framebuffer:
         this.gl.drawArrays(this.gl.TRIANGLES, 0.0, this.vertices);
 
 		// Unbind text framebuffer to render to screen:
 		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
+		// return alpha;
 	}
 
 	public resize(): void

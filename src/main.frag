@@ -56,5 +56,20 @@ void main(void)
 	// Sample ocean texture, add it to the text
 	// framebuffer and render onto the screen:
 	fragColor = texture(ocean, distortion) + textColor;
+
+	/* // Sample ocean texture with flipped UVs:
+	vec4 oceanColor = texture(ocean, distortion);
+
+	// Get smooth alpha between text and ocean textures:
+	float a = smoothstep(textColor.a, oceanColor.a, textColor.a);
+
+	// Get texture color based on alpha value:
+	vec4 color = mix(textColor, oceanColor, a);
+
+	// Get highest component in "color" vector:
+	float m = max(max(color.r, color.g), color.b);
+
+	// Blend between textures using an "opposite" value:
+	fragColor = mix(textColor, oceanColor, 1.0 - m); */
 #endif
 }

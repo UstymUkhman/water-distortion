@@ -214,7 +214,7 @@ export default class Waves
 
 			plane.rotation = Math.random() * TAU;
 			plane.scale = 0.256;
-			plane.alpha = 0.25;
+			plane.alpha = 0.128;
 		}
 
 		for (let p = 0; p < this.amount; p++)
