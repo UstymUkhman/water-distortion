@@ -1,10 +1,10 @@
 type RGBA = [number, number, number, number];
-type Chars = keyof typeof Roboto['chars'];
-type Char = typeof Roboto['chars'][Chars];
+type Chars = keyof typeof Roboto["chars"];
+type Char = typeof Roboto["chars"][Chars];
 
-import Roboto from '@/roboto.json';
-import Fragment from '@/text.frag';
-import Vertex from '@/text.vert';
+import Roboto from "@/roboto.json";
+import Fragment from "@/text.frag";
+import Vertex from "@/text.vert";
 
 type Font = typeof Roboto & {
 	kern?: Record<string, number>;
@@ -145,7 +145,7 @@ export default class Text
 
 		// Set font texture size uniform:
 		this.gl.uniform2f(
-			this.gl.getUniformLocation(this.program, 'textureSize'),
+			this.gl.getUniformLocation(this.program, "textureSize"),
 			image.width, image.height
 		);
 	}
@@ -164,11 +164,11 @@ export default class Text
 	private createTextUniforms(): void
 	{
 		// Set SDF text rendering and font texture uniforms:
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'subpixelRendering'), +this.subpixel);
-		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'hintAmount'), this.hintAmount);
-		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'borderSize'), Roboto.iy);
-		this.gl.uniform4f(this.gl.getUniformLocation(this.program, 'color'), ...this.color);
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'fontTexture'), 3.0);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program, "subpixelRendering"), +this.subpixel);
+		this.gl.uniform1f(this.gl.getUniformLocation(this.program, "hintAmount"), this.hintAmount);
+		this.gl.uniform1f(this.gl.getUniformLocation(this.program, "borderSize"), Roboto.iy);
+		this.gl.uniform4f(this.gl.getUniformLocation(this.program, "color"), ...this.color);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program, "fontTexture"), 3.0);
 	}
 
 	private createFramebuffer(): void
@@ -227,7 +227,7 @@ export default class Text
 		const { lineHeight, upScale } = metrics;
 
 		// Used to calculate kerning:
-		let previousCharacter = ' ';
+		let previousCharacter = " ";
 
 		// Current pen position:
 		let penPosition = position;
@@ -257,7 +257,7 @@ export default class Text
 			// Get current text character:
 			let character = text[textPosition++];
 
-			if (character === '\n')
+			if (character === "\n")
 			{
 				// Expand character's the bounding box:
 				if (penPosition[0] > maxWidth)
@@ -267,14 +267,14 @@ export default class Text
 
 				penPosition[0] = position[0];
 				penPosition[1] -= lineHeight;
-				previousCharacter = ' ';
+				previousCharacter = " ";
 				continue;
 			}
 
-			if (character === ' ')
+			if (character === " ")
 			{
 				penPosition[0] += Roboto.space_advance * upScale;
-				previousCharacter = ' ';
+				previousCharacter = " ";
 				continue;
 			}
 
@@ -425,7 +425,7 @@ export default class Text
 			[0.0, 0.0],
 			this.positionData,
 			this.getFontMetrics(fontSize),
-			'WATER DISTORTION'
+			"WATER DISTORTION"
 		);
 
 		// Get new transform matrix for the vertex shader:
@@ -445,7 +445,7 @@ export default class Text
 
 		// Update transform uniform:
 		this.gl.uniformMatrix3fv(
-			this.gl.getUniformLocation(this.program, 'transform'),
+			this.gl.getUniformLocation(this.program, "transform"),
 			false, this.transform
 		);
 

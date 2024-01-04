@@ -1,10 +1,10 @@
-import Distortion from '/distortion.png';
-import Fragment from '@/main.frag';
-import Vertex from '@/main.vert';
-import Roboto from '/roboto.png';
-import Ocean from '/ocean.jpg';
-import Waves from '@/waves';
-import Text from '@/text';
+import Distortion from "/distortion.png";
+import Fragment from "@/main.frag";
+import Vertex from "@/main.vert";
+import Roboto from "/roboto.png";
+import Ocean from "/ocean.jpg";
+import Waves from "@/waves";
+import Text from "@/text";
 
 export default class
 {
@@ -30,12 +30,12 @@ export default class
 	public constructor(private readonly canvas: HTMLCanvasElement)
 	{
 		// Create WebGL2 context:
-		this.gl = canvas.getContext('webgl2',
+		this.gl = canvas.getContext("webgl2",
 		{
-			powerPreference: 'high-performance',
+			powerPreference: "high-performance",
 			failIfMajorPerformanceCaveat: true,
 			preserveDrawingBuffer: false,
-			premultipliedAlpha: false,
+			premultipliedAlpha: true,
 			desynchronized: false,
 			xrCompatible: false,
 			antialias: true,
@@ -48,9 +48,9 @@ export default class
 		this.program = this.createProgram() as WebGLProgram;
 
 		// Create event listeners to handle user events:
-		canvas.addEventListener('touchmove', this.onTouch);
-		canvas.addEventListener('mousemove', this.onMove);
-		window.addEventListener('resize', this.onResize);
+		canvas.addEventListener("touchmove", this.onTouch);
+		canvas.addEventListener("mousemove", this.onMove);
+		window.addEventListener("resize", this.onResize);
 
 		// Load all required textures:
 		this.loadImages().then(images =>
@@ -58,13 +58,16 @@ export default class
 			// Create background scene:
 			this.createScene(images[0]);
 
-			// Initialize distortion waves
-			// to render onto a framebuffer:
-			this.waves = new Waves(this.gl, images[1]);
-
 			// Initialize text program
 			// to render onto a framebuffer:
-			this.text = new Text(this.gl, images[2]);
+			this.text = new Text(this.gl, images[1]);
+
+			// Initialize distortion waves
+			// to render onto a framebuffer:
+			this.waves = new Waves(this.gl, images[2]);
+
+			// Additive blending to control wave fade effect:
+			this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
 
 			// Update sizes, uniforms and
 			// start rendering to screen:
@@ -109,9 +112,11 @@ export default class
 
 		// Enable WebGL blending:
 		this.gl.enable(this.gl.BLEND);
-		// Additive blending which respects plane
-		// transparency to control the wave fade effect:
-		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
+		// Blending function for pre-multiplied alpha textures:
+		this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
+
+		// Pre-multiply textures alpha for correct blending when uploading images:
+		this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
 		// Flip uploaded textures pixels along Y-axis:
 		// this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -139,15 +144,6 @@ export default class
 				image.src = Ocean;
 			}),
 
-			// Distortion mask:
-			new Promise(resolve =>
-			{
-				const onLoad = () => resolve(image);
-				const image = new Image();
-				image.src = Distortion;
-				image.onload = onLoad;
-			}),
-
 			// Roboto font:
 			new Promise(resolve =>
 			{
@@ -155,6 +151,15 @@ export default class
 				const image = new Image();
 				image.onload = onLoad;
 				image.src = Roboto;
+			}),
+
+			// Distortion mask:
+			new Promise(resolve =>
+			{
+				const onLoad = () => resolve(image);
+				const image = new Image();
+				image.src = Distortion;
+				image.onload = onLoad;
 			})
 		]);
 	}
@@ -162,7 +167,7 @@ export default class
 	private createScene(image: HTMLImageElement): void
 	{
 		// Get position attribute and create its buffer and data for a background texture:
-		this.positionLocation = this.gl.getAttribLocation(this.program, 'position');
+		this.positionLocation = this.gl.getAttribLocation(this.program, "position");
 		this.positionBuffer = this.gl.createBuffer();
 
 		// Use sizes in pixels to draw triangles, position data
@@ -198,10 +203,10 @@ export default class
 		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
 
 		// Set "main" WebGL program uniforms:
-		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'force'), 0.1);
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'ocean'), 0.0);
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'waves'), 2.0);
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program,  'text'), 4.0);
+		this.gl.uniform1f(this.gl.getUniformLocation(this.program, "force"), 0.1);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program, "ocean"), 0.0);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program, "waves"), 2.0);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program,  "text"), 4.0);
 	}
 
 	private touchMove(event: TouchEvent): void
@@ -328,7 +333,7 @@ export default class
 
 		// Update size uniform:
 		this.gl.uniform2f(
-			this.gl.getUniformLocation(this.program, 'size'),
+			this.gl.getUniformLocation(this.program, "size"),
 			this.canvas.width, this.canvas.height
 		);
 	}
@@ -339,9 +344,9 @@ export default class
 		const canvas = this.gl.canvas as HTMLCanvasElement;
 
 		// Remove event listeners used to handle user events:
-		canvas.removeEventListener('touchmove', this.onTouch);
-		canvas.removeEventListener('mousemove', this.onMove);
-		window.removeEventListener('resize', this.onResize);
+		canvas.removeEventListener("touchmove", this.onTouch);
+		canvas.removeEventListener("mousemove", this.onMove);
+		window.removeEventListener("resize", this.onResize);
 
 		// Cancel next rendering frame:
 		cancelAnimationFrame(this.raf);
@@ -369,7 +374,7 @@ export default class
 		this.gl.flush(); this.gl.finish();
 
 		// Simulate losing this WebGL2 context:
-		this.gl.getExtension('WEBGL_lose_context')?.loseContext();
+		this.gl.getExtension("WEBGL_lose_context")?.loseContext();
 
 		// Remove position buffer reference:
 		this.positionBuffer = null;

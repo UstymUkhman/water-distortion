@@ -1,3 +1,3 @@
-import WaterDistortion from '@/main';
+import WaterDistortion from "@/main";
 
-new WaterDistortion(document.getElementsByTagName('canvas')[0]);
+new WaterDistortion(document.getElementsByTagName("canvas")[0]);

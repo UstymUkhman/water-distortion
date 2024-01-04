@@ -1,5 +1,5 @@
-import Fragment from '@/wave.frag';
-import Vertex from '@/wave.vert';
+import Fragment from "@/wave.frag";
+import Vertex from "@/wave.vert";
 
 // 360 angle in radians:
 const TAU = Math.PI * 2.0;
@@ -93,14 +93,14 @@ export default class Waves
 	private createWavePlane(image: HTMLImageElement): void
 	{
 		// Cache "wave" WebGL program's uniforms:
-		this.alpha = this.gl.getUniformLocation(this.program, 'alpha');
-		this.scale = this.gl.getUniformLocation(this.program, 'scale');
+		this.alpha = this.gl.getUniformLocation(this.program, "alpha");
+		this.scale = this.gl.getUniformLocation(this.program, "scale");
 
-		this.rotation = this.gl.getUniformLocation(this.program, 'rotation');
-		this.translation = this.gl.getUniformLocation(this.program, 'translation');
+		this.rotation = this.gl.getUniformLocation(this.program, "rotation");
+		this.translation = this.gl.getUniformLocation(this.program, "translation");
 
 		// Get position attribute and create its buffer and data for a plane object:
-		this.positionLocation = this.gl.getAttribLocation(this.program, 'position');
+		this.positionLocation = this.gl.getAttribLocation(this.program, "position");
 		this.positionBuffer = this.gl.createBuffer();
 
 		const offset = this.size * -0.5;
@@ -141,8 +141,8 @@ export default class Waves
 		this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
 
 		// Set "wave" WebGL program uniforms:
-		this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'distortion'), 1.0);
-		this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'planeSize'), size);
+		this.gl.uniform1i(this.gl.getUniformLocation(this.program, "distortion"), 1.0);
+		this.gl.uniform1f(this.gl.getUniformLocation(this.program, "planeSize"), size);
 
 		this.gl.uniform1f(this.scale, 0.256);
 		this.gl.uniform1f(this.alpha, 0.002);
@@ -214,7 +214,7 @@ export default class Waves
 
 			plane.rotation = Math.random() * TAU;
 			plane.scale = 0.256;
-			plane.alpha = 0.128;
+			plane.alpha = 0.192;
 		}
 
 		for (let p = 0; p < this.amount; p++)
@@ -261,7 +261,7 @@ export default class Waves
 
 		// Update size uniform:
 		this.gl.uniform2f(
-			this.gl.getUniformLocation(this.program, 'canvasSize'),
+			this.gl.getUniformLocation(this.program, "canvasSize"),
 			this.gl.canvas.width, this.gl.canvas.height
 		);
 
